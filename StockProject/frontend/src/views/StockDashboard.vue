@@ -11,17 +11,19 @@
     
     <StockSearch @search="handleSearch" />
     
-    <!-- 관심 종목 추가 -->
+    <!-- 관심 종목 패널 -->
     <WatchlistPanel 
       ref="watchlistRef"
       @select="handleWatchlistSelect"
     />
     
+    <!-- StockInfo에 이벤트 리스너 추가 -->
     <StockInfo 
       v-if="currentStock"
       :stockData="currentStock"
       :stockCode="searchedCode"
       :stockName="stockName"
+      @watchlist-updated="handleWatchlistUpdate"
     />
 
     <StockChart 
@@ -95,6 +97,14 @@ const handleWatchlistSelect = (code, name) => {
   handleSearch(code, name)
 }
 
+// 관심 종목 업데이트 핸들러 (새로 추가)
+const handleWatchlistUpdate = () => {
+  // WatchlistPanel을 새로고침
+  if (watchlistRef.value) {
+    watchlistRef.value.fetchWatchlist()
+  }
+}
+
 const loadChart = async (code, period) => {
   try {
     const response = await axios.get(`${API_BASE}/stock/chart/${code}?period=${period}`)
@@ -128,16 +138,18 @@ const handlePeriodChange = (period) => {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 30px;
-  padding: 20px;
-  background: #1e1e1e;
+  padding: 20px 30px;
+  background: linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%);
   border-radius: 15px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  border: 1px solid #333;
 }
 
 h1 {
   color: #4CAF50;
   margin: 0;
   font-size: 28px;
+  text-shadow: 0 2px 10px rgba(76, 175, 80, 0.3);
 }
 
 .user-section {
@@ -147,26 +159,35 @@ h1 {
 }
 
 .welcome {
-  color: #aaa;
+  color: #fff;
   font-size: 16px;
-  font-weight: 500;
+  font-weight: 600;
+  padding: 10px 20px;
+  background: linear-gradient(135deg, rgba(76, 175, 80, 0.2) 0%, rgba(76, 175, 80, 0.1) 100%);
+  border-radius: 10px;
+  border: 1px solid rgba(76, 175, 80, 0.3);
 }
 
 .logout-btn {
-  padding: 10px 20px;
+  padding: 10px 24px;
   background: linear-gradient(135deg, #f44336 0%, #da190b 100%);
   color: white;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   cursor: pointer;
   font-size: 14px;
   font-weight: bold;
   transition: all 0.3s;
-  box-shadow: 0 2px 10px rgba(244, 67, 54, 0.3);
+  box-shadow: 0 4px 15px rgba(244, 67, 54, 0.3);
 }
 
 .logout-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(244, 67, 54, 0.4);
+  box-shadow: 0 6px 20px rgba(244, 67, 54, 0.5);
+  background: linear-gradient(135deg, #ff5449 0%, #e91e0f 100%);
+}
+
+.logout-btn:active {
+  transform: translateY(0);
 }
 </style>

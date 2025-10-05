@@ -6,7 +6,7 @@
         <span class="market-status">업종: {{ stockData.bstp_kor_isnm || '운송장비·부품' }}</span>
       </div>
       
-      <!-- 하트 버튼 추가 -->
+      <!-- 하트 버튼 -->
       <button 
         @click="toggleWatchlist" 
         class="watchlist-btn"
@@ -95,7 +95,7 @@
 </template>
 
 <script setup>
-import { ref, computed, defineProps, watch } from 'vue'
+import { ref, computed, defineProps, defineEmits, watch } from 'vue'
 import axios from 'axios'
 
 const props = defineProps({
@@ -103,6 +103,8 @@ const props = defineProps({
   stockCode: String,
   stockName: String
 })
+
+const emit = defineEmits(['watchlist-updated'])
 
 const API_BASE = 'http://localhost:8000/api'
 
@@ -176,6 +178,9 @@ const toggleWatchlist = async () => {
       if (response.data.success) {
         isInWatchlist.value = false
         alert('관심 종목에서 삭제되었습니다')
+        
+        // 부모 컴포넌트에 업데이트 알림
+        emit('watchlist-updated')
       }
     } else {
       // 추가
@@ -190,6 +195,9 @@ const toggleWatchlist = async () => {
       if (response.data.success) {
         isInWatchlist.value = true
         alert('관심 종목에 추가되었습니다')
+        
+        // 부모 컴포넌트에 업데이트 알림
+        emit('watchlist-updated')
       } else {
         alert(response.data.message)
       }
@@ -211,6 +219,7 @@ watch(() => props.stockCode, () => {
 </script>
 
 <style scoped>
+/* 기존 스타일 유지 */
 .stock-info {
   background: #1e1e1e;
   padding: 20px;
