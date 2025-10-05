@@ -1,6 +1,6 @@
 # pip install sqlalchemy psycopg2-binary alembic
 # python database.py 실행
-from sqlalchemy import create_engine, Column, Integer, String, DateTime, Boolean, ForeignKey, Text, JSON, Index
+from sqlalchemy import create_engine, Column, Integer, String, DateTime, Boolean, ForeignKey, Text, JSON
 from sqlalchemy.orm import DeclarativeBase, sessionmaker, relationship
 from datetime import datetime, timezone
 import uuid
@@ -30,82 +30,81 @@ def utc_now():
     """timezone-aware UTC 현재 시간"""
     return datetime.now(timezone.utc)
 
-# ==================== 주식 종목 테이블 ====================
-class Stock(Base):
-    __tablename__ = "stocks"
-    
-    stock_id = Column(Integer, primary_key=True, autoincrement=True)
-    stock_code = Column(String(20), unique=True, nullable=False, index=True)
-    stock_name = Column(String(200), nullable=False, index=True)
-    created_at = Column(DateTime, default=utc_now)
-    updated_at = Column(DateTime, default=utc_now, onupdate=utc_now)
-    
-    # 관계 설정
-    watchlist_items = relationship("Watchlist", back_populates="stock", cascade="all, delete-orphan")
-    search_history_items = relationship("SearchHistory", back_populates="stock", cascade="all, delete-orphan")
-    portfolio_items = relationship("Portfolio", back_populates="stock", cascade="all, delete-orphan")
-
-# ==================== 사용자 테이블 ====================
+# 모델 정의
 class User(Base):
     __tablename__ = "users"
     
     user_id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    email = Column(String(255), unique=True, nullable=False, index=True)
+    email = Column(String(255), unique=True, nullable=False)
     password = Column(String(255), nullable=False)
     username = Column(String(100), nullable=False)
     created_at = Column(DateTime, default=utc_now)
     updated_at = Column(DateTime, default=utc_now, onupdate=utc_now)
     
-    # 관계 설정
     watchlist = relationship("Watchlist", back_populates="user", cascade="all, delete-orphan")
     search_history = relationship("SearchHistory", back_populates="user", cascade="all, delete-orphan")
     portfolio = relationship("Portfolio", back_populates="user", cascade="all, delete-orphan")
 
-# ==================== 관심 종목 테이블 ====================
 class Watchlist(Base):
     __tablename__ = "watchlist"
     
     watchlist_id = Column(Integer, primary_key=True, autoincrement=True)
-    user_id = Column(String(36), ForeignKey("users.user_id", ondelete="CASCADE"), nullable=False)
-    stock_id = Column(Integer, ForeignKey("stocks.stock_id", ondelete="CASCADE"), nullable=False)
+    user_id = Column(String(36), ForeignKey("users.user_id", ondelete="CASCADE"))
+    stock_code = Column(String(10), nullable=False)
+    stock_name = Column(String(100), nullable=False)
     added_at = Column(DateTime, default=utc_now)
     alert_enabled = Column(Boolean, default=False)
     target_price = Column(Integer, nullable=True)
     
-    # 관계 설정
     user = relationship("User", back_populates="watchlist")
-    stock = relationship("Stock", back_populates="watchlist_items")
 
-# ==================== 검색 기록 테이블 ====================
 class SearchHistory(Base):
     __tablename__ = "search_history"
     
     history_id = Column(Integer, primary_key=True, autoincrement=True)
     user_id = Column(String(36), ForeignKey("users.user_id", ondelete="CASCADE"), nullable=True)
-    stock_id = Column(Integer, ForeignKey("stocks.stock_id", ondelete="CASCADE"), nullable=False)
+    stock_code = Column(String(10), nullable=False)
+    stock_name = Column(String(100), nullable=False)
     searched_at = Column(DateTime, default=utc_now)
     
-    # 관계 설정
     user = relationship("User", back_populates="search_history")
-    stock = relationship("Stock", back_populates="search_history_items")
 
-# ==================== 포트폴리오 테이블 ====================
 class Portfolio(Base):
     __tablename__ = "portfolio"
     
     portfolio_id = Column(Integer, primary_key=True, autoincrement=True)
-    user_id = Column(String(36), ForeignKey("users.user_id", ondelete="CASCADE"), nullable=False)
-    stock_id = Column(Integer, ForeignKey("stocks.stock_id", ondelete="CASCADE"), nullable=False)
+    user_id = Column(String(36), ForeignKey("users.user_id", ondelete="CASCADE"))
+    stock_code = Column(String(10), nullable=False)
+    stock_name = Column(String(100), nullable=False)
     quantity = Column(Integer, nullable=False)
     avg_price = Column(Integer, nullable=False)
     purchase_date = Column(DateTime, nullable=False)
     created_at = Column(DateTime, default=utc_now)
     
-    # 관계 설정
     user = relationship("User", back_populates="portfolio")
-    stock = relationship("Stock", back_populates="portfolio_items")
 
-# ==================== 데이터베이스 세션 ====================
+class StockCache(Base):
+    __tablename__ = "stock_cache"
+    
+    cache_id = Column(Integer, primary_key=True, autoincrement=True)
+    stock_code = Column(String(10), nullable=False)
+    data = Column(JSON, nullable=False)
+    cache_type = Column(String(50), nullable=False)
+    cached_at = Column(DateTime, default=utc_now)
+    expires_at = Column(DateTime, nullable=False)
+
+class NewsCache(Base):
+    __tablename__ = "news_cache"
+    
+    news_id = Column(Integer, primary_key=True, autoincrement=True)
+    stock_code = Column(String(10), nullable=False)
+    title = Column(Text, nullable=False)
+    link = Column(Text, nullable=False)
+    source = Column(String(100))
+    published_at = Column(DateTime)
+    cached_at = Column(DateTime, default=utc_now)
+
+# 데이터베이스 세션 의존성
 def get_db():
     db = SessionLocal()
     try:
@@ -113,21 +112,14 @@ def get_db():
     finally:
         db.close()
 
+# 테이블 생성
 def init_db():
-    """테이블 생성"""
     Base.metadata.create_all(bind=engine)
 
+# 테이블 삭제 (개발용)
 def drop_db():
-    """모든 테이블 삭제"""
     Base.metadata.drop_all(bind=engine)
 
 if __name__ == "__main__":
     init_db()
     print("✅ 데이터베이스 테이블 생성 완료")
-
-
-# 1. 테이블 재생성
-# python database.py
-
-# 2. Excel 데이터 로드
-# python load_stocks.py kospi_code_name.xlsx

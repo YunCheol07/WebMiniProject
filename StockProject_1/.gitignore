@@ -1,0 +1,49 @@
+# 가상환경 폴더 제외
+venv/
+
+# backend 폴더 내 stockinfo.yaml 파일 제외
+backend/stockinfo.yaml
+
+# config.py 제외
+backend/config.py
+
+# 추가 예시(일반적으로 자주 제외하는 파일들)
+# 로그 파일 제외
+*.log
+
+# 파이썬 컴파일된 파일 제외
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# 환경 변수 파일 제외
+.env
+
+# 기타 운영체제별 임시 파일 제외
+.DS_Store
+Thumbs.db
+
+# 환경 변수
+backend/.env
+.env.local
+.env.*.local
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+
+# 데이터베이스
+*.db
+*.sqlite3
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo

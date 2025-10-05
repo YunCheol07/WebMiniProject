@@ -12,11 +12,6 @@ import uvicorn
 import logging
 from urllib.parse import quote
 import feedparser
-from database import get_db, User, Stock
-from sqlalchemy.orm import Session
-from sqlalchemy import or_, func, case, literal_column
-from database import Watchlist, Stock, User
-from auth import get_current_user
 
 from config import get_settings
 from database import get_db, User
@@ -240,280 +235,7 @@ async def logout():
     """로그아웃"""
     return {"message": "로그아웃 성공"}
 
-# ==================== 주식 검색 API ====================
-
-@app.get("/api/stocks/search")
-async def search_stocks(
-    q: str = Query(..., min_length=1, description="검색어"),
-    limit: int = Query(10, le=50, description="결과 개수"),
-    db: Session = Depends(get_db)
-):
-    """
-    최적화된 주식 종목 검색
-    
-    "삼성" 검색 시:
-    1. 삼성전자
-    2. 삼성SDI
-    3. 삼성바이오로직스
-    4. 삼성물산
-    5. ... (삼성으로 시작하는 모든 종목)
-    6. 한투삼성... (삼성이 중간에 있는 종목)
-    """
-    try:
-        search_query = q.strip()
-        
-        # 우선순위 점수
-        priority = case(
-            # 종목명이 검색어로 정확히 시작 → 최우선 (1점)
-            (Stock.stock_name.like(f"{search_query}%"), 1),
-            # 종목코드가 검색어로 시작 → 2순위 (2점)
-            (Stock.stock_code.like(f"{search_query}%"), 2),
-            # 종목명에 검색어 포함 → 3순위 (3점)
-            (Stock.stock_name.like(f"%{search_query}%"), 3),
-            # 종목코드에 검색어 포함 → 4순위 (4점)
-            (Stock.stock_code.like(f"%{search_query}%"), 4),
-            else_=5
-        )
-        
-        # 검색 조건 (OR 조건)
-        conditions = or_(
-            Stock.stock_name.like(f"%{search_query}%"),
-            Stock.stock_code.like(f"%{search_query}%")
-        )
-        
-        # 검색 실행: 우선순위 → 이름순 정렬
-        results = db.query(Stock)\
-            .filter(conditions)\
-            .order_by(priority, Stock.stock_name)\
-            .limit(limit)\
-            .all()
-        
-        return {
-            "success": True,
-            "count": len(results),
-            "query": search_query,
-            "stocks": [
-                {
-                    "stock_code": stock.stock_code,
-                    "stock_name": stock.stock_name
-                }
-                for stock in results
-            ]
-        }
-    
-    except Exception as e:
-        logger.error(f"검색 오류: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.get("/api/stocks/{stock_code}")
-async def get_stock_info(stock_code: str, db: Session = Depends(get_db)):
-    """특정 종목 정보 조회"""
-    stock = db.query(Stock).filter(Stock.stock_code == stock_code).first()
-    
-    if not stock:
-        raise HTTPException(status_code=404, detail="종목을 찾을 수 없습니다")
-    
-    return {
-        "stock_code": stock.stock_code,
-        "stock_name": stock.stock_name
-    }
-
-@app.get("/api/stocks/list")
-async def list_stocks(
-    page: int = Query(1, ge=1),
-    limit: int = Query(20, le=100),
-    db: Session = Depends(get_db)
-):
-    """전체 종목 목록 조회"""
-    query = db.query(Stock)
-    
-    total = query.count()
-    stocks = query.offset((page - 1) * limit).limit(limit).all()
-    
-    return {
-        "success": True,
-        "total": total,
-        "page": page,
-        "limit": limit,
-        "stocks": [
-            {
-                "stock_code": stock.stock_code,
-                "stock_name": stock.stock_name
-            }
-            for stock in stocks
-        ]
-    }
-
-# ==================== 관심 종목 API ====================
-
-@app.get("/api/watchlist")
-async def get_watchlist(
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    """
-    현재 사용자의 관심 종목 목록 조회
-    """
-    try:
-        watchlist_items = db.query(Watchlist)\
-            .filter(Watchlist.user_id == current_user.user_id)\
-            .order_by(Watchlist.added_at.desc())\
-            .all()
-        
-        result = []
-        for item in watchlist_items:
-            # stock 관계를 통해 종목 정보 가져오기
-            stock = item.stock
-            result.append({
-                "watchlist_id": item.watchlist_id,
-                "stock_id": stock.stock_id,
-                "stock_code": stock.stock_code,
-                "stock_name": stock.stock_name,
-                "added_at": item.added_at.isoformat(),
-                "alert_enabled": item.alert_enabled,
-                "target_price": item.target_price
-            })
-        
-        return {
-            "success": True,
-            "count": len(result),
-            "watchlist": result
-        }
-    
-    except Exception as e:
-        logger.error(f"관심 종목 조회 실패: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@app.post("/api/watchlist/{stock_code}")
-async def add_to_watchlist(
-    stock_code: str,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    """
-    관심 종목에 추가
-    """
-    try:
-        # 종목 확인
-        stock = db.query(Stock).filter(Stock.stock_code == stock_code).first()
-        if not stock:
-            raise HTTPException(status_code=404, detail="종목을 찾을 수 없습니다")
-        
-        # 이미 추가되어 있는지 확인
-        existing = db.query(Watchlist).filter(
-            Watchlist.user_id == current_user.user_id,
-            Watchlist.stock_id == stock.stock_id
-        ).first()
-        
-        if existing:
-            return {
-                "success": False,
-                "message": "이미 관심 종목에 추가되어 있습니다",
-                "watchlist_id": existing.watchlist_id
-            }
-        
-        # 새로 추가
-        new_watchlist = Watchlist(
-            user_id=current_user.user_id,
-            stock_id=stock.stock_id,
-            alert_enabled=False
-        )
-        
-        db.add(new_watchlist)
-        db.commit()
-        db.refresh(new_watchlist)
-        
-        return {
-            "success": True,
-            "message": "관심 종목에 추가되었습니다",
-            "watchlist_id": new_watchlist.watchlist_id,
-            "stock_code": stock.stock_code,
-            "stock_name": stock.stock_name
-        }
-    
-    except HTTPException:
-        raise
-    except Exception as e:
-        db.rollback()
-        logger.error(f"관심 종목 추가 실패: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@app.delete("/api/watchlist/{stock_code}")
-async def remove_from_watchlist(
-    stock_code: str,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    """
-    관심 종목에서 삭제
-    """
-    try:
-        # 종목 확인
-        stock = db.query(Stock).filter(Stock.stock_code == stock_code).first()
-        if not stock:
-            raise HTTPException(status_code=404, detail="종목을 찾을 수 없습니다")
-        
-        # 관심 종목에서 찾기
-        watchlist_item = db.query(Watchlist).filter(
-            Watchlist.user_id == current_user.user_id,
-            Watchlist.stock_id == stock.stock_id
-        ).first()
-        
-        if not watchlist_item:
-            return {
-                "success": False,
-                "message": "관심 종목에 없습니다"
-            }
-        
-        db.delete(watchlist_item)
-        db.commit()
-        
-        return {
-            "success": True,
-            "message": "관심 종목에서 삭제되었습니다",
-            "stock_code": stock.stock_code,
-            "stock_name": stock.stock_name
-        }
-    
-    except HTTPException:
-        raise
-    except Exception as e:
-        db.rollback()
-        logger.error(f"관심 종목 삭제 실패: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@app.get("/api/watchlist/check/{stock_code}")
-async def check_in_watchlist(
-    stock_code: str,
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    """
-    특정 종목이 관심 종목에 있는지 확인
-    """
-    try:
-        stock = db.query(Stock).filter(Stock.stock_code == stock_code).first()
-        if not stock:
-            return {"in_watchlist": False}
-        
-        exists = db.query(Watchlist).filter(
-            Watchlist.user_id == current_user.user_id,
-            Watchlist.stock_id == stock.stock_id
-        ).first()
-        
-        return {
-            "in_watchlist": exists is not None,
-            "watchlist_id": exists.watchlist_id if exists else None
-        }
-    
-    except Exception as e:
-        logger.error(f"관심 종목 확인 실패: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-# ==================== 주식 실시간 데이터 API ====================
+# ==================== 기존 주식 API ====================
 
 @app.get("/")
 async def root():
@@ -525,14 +247,9 @@ async def root():
     }
 
 @app.get("/api/stock/current/{stock_code}")
-async def get_current_price(stock_code: str, db: Session = Depends(get_db)):
+async def get_current_price(stock_code: str):
     """현재가 조회"""
     global access_token, config
-    
-    # DB에서 종목 존재 여부 확인 (선택사항)
-    stock = db.query(Stock).filter(Stock.stock_code == stock_code).first()
-    if not stock:
-        raise HTTPException(status_code=404, detail="DB에 등록되지 않은 종목입니다")
     
     if not access_token:
         token = get_access_token_sync()
@@ -563,22 +280,12 @@ async def get_current_price(stock_code: str, db: Session = Depends(get_db)):
         else:
             raise HTTPException(status_code=res.status_code, detail="API 호출 실패")
     except Exception as e:
-        logger.error(f"현재가 조회 실패: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/stock/chart/{stock_code}")
-async def get_stock_chart(
-    stock_code: str, 
-    period: str = Query("D"),
-    db: Session = Depends(get_db)
-):
+async def get_stock_chart(stock_code: str, period: str = Query("D")):
     """차트 데이터 조회"""
     global access_token, config
-    
-    # DB에서 종목 존재 여부 확인 (선택사항)
-    stock = db.query(Stock).filter(Stock.stock_code == stock_code).first()
-    if not stock:
-        raise HTTPException(status_code=404, detail="DB에 등록되지 않은 종목입니다")
     
     if not access_token:
         get_access_token_sync()
@@ -615,21 +322,20 @@ async def get_stock_chart(
         else:
             raise HTTPException(status_code=res.status_code, detail="차트 조회 실패")
     except Exception as e:
-        logger.error(f"차트 조회 실패: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/stock/news/{stock_code}")
-async def get_stock_news(stock_code: str, db: Session = Depends(get_db)):
-    """뉴스 조회 - DB에서 종목명을 가져와서 검색"""
+async def get_stock_news(stock_code: str):
+    """뉴스 조회"""
+    stock_names = {
+        '005930': '삼성전자', '000660': 'SK하이닉스', '035420': 'NAVER',
+        '035720': '카카오', '005380': '현대차', '051910': 'LG화학',
+        '006400': '삼성SDI', '000270': '기아', '207940': '삼성바이오로직스',
+        '068270': '셀트리온', '005490': 'POSCO홀딩스', '105560': 'KB금융',
+        '055550': '신한지주', '012330': '현대모비스', '028260': '삼성물산'
+    }
     
-    # DB에서 종목 정보 조회
-    stock = db.query(Stock).filter(Stock.stock_code == stock_code).first()
-    
-    if stock:
-        stock_name = stock.stock_name
-    else:
-        # DB에 없으면 기본값 사용
-        stock_name = f"종목{stock_code}"
+    stock_name = stock_names.get(stock_code, f"종목{stock_code}")
     
     try:
         search_query = quote(stock_name)
@@ -648,13 +354,11 @@ async def get_stock_news(stock_code: str, db: Session = Depends(get_db)):
         
         return {
             "success": True,
-            "stock_code": stock_code,
             "stock_name": stock_name,
             "news_count": len(news_items),
             "news": news_items
         }
     except Exception as e:
-        logger.error(f"뉴스 조회 실패: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/health")
@@ -676,4 +380,4 @@ if __name__ == "__main__":
     )
 
 
-# uvicorn app:app --reload --host 127.0.0.1 --port 8000
+# uvicorn app:app --reload --host 0.0.0.0 --port 8000

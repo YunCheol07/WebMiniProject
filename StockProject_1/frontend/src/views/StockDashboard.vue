@@ -1,5 +1,6 @@
 <template>
   <div class="stock-dashboard">
+    <!-- 헤더 -->
     <header class="dashboard-header">
       <h1>🏦 주식 대시보드</h1>
       
@@ -10,12 +11,6 @@
     </header>
     
     <StockSearch @search="handleSearch" />
-    
-    <!-- 관심 종목 추가 -->
-    <WatchlistPanel 
-      ref="watchlistRef"
-      @select="handleWatchlistSelect"
-    />
     
     <StockInfo 
       v-if="currentStock"
@@ -48,7 +43,6 @@ import StockSearch from '../components/StockSearch.vue'
 import StockInfo from '../components/StockInfo.vue'
 import StockChart from '../components/StockChart.vue'
 import StockNews from '../components/StockNews.vue'
-import WatchlistPanel from '../components/WatchlistPanel.vue'
 import { useAuth } from '../stores/auth'
 
 const API_BASE = 'http://localhost:8000/api'
@@ -60,7 +54,24 @@ const currentStock = ref(null)
 const searchedCode = ref('')
 const stockName = ref('')
 const chartRef = ref(null)
-const watchlistRef = ref(null)
+
+const stockNames = {
+  '005930': '삼성전자',
+  '000660': 'SK하이닉스',
+  '035420': 'NAVER',
+  '035720': '카카오',
+  '005380': '현대차',
+  '051910': 'LG화학',
+  '006400': '삼성SDI',
+  '000270': '기아',
+  '207940': '삼성바이오로직스',
+  '068270': '셀트리온',
+  '005490': 'POSCO홀딩스',
+  '105560': 'KB금융',
+  '055550': '신한지주',
+  '012330': '현대모비스',
+  '028260': '삼성물산'
+}
 
 onMounted(async () => {
   await fetchUser()
@@ -73,9 +84,9 @@ const handleLogout = () => {
   }
 }
 
-const handleSearch = async (code, name) => {
+const handleSearch = async (code) => {
   searchedCode.value = code
-  stockName.value = name
+  stockName.value = stockNames[code] || `종목 ${code}`
   
   try {
     const response = await axios.get(`${API_BASE}/stock/current/${code}`)
@@ -89,10 +100,6 @@ const handleSearch = async (code, name) => {
     console.error('주식 정보 조회 실패:', error)
     alert('주식 정보를 가져오는데 실패했습니다.')
   }
-}
-
-const handleWatchlistSelect = (code, name) => {
-  handleSearch(code, name)
 }
 
 const loadChart = async (code, period) => {
