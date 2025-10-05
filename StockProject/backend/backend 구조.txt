@@ -1,0 +1,30 @@
+backend/
+├── app.py                    # 메인 앱 (간소화)
+├── config.py                 # 설정
+├── database.py               # 데이터베이스 모델
+├── auth.py                   # ✅ 인증 유틸리티 (그대로 유지!)
+│
+├── routers/                  # API 라우터
+│   ├── __init__.py
+│   ├── auth_router.py        # ← auth.py 사용
+│   ├── stock_router.py
+│   ├── watchlist_router.py   # ← auth.py의 get_current_user 사용
+│   └── market_router.py
+│
+├── services/                 # 비즈니스 로직
+│   ├── __init__.py
+│   └── korea_investment.py
+│
+└── schemas/                  # Pydantic 스키마
+    ├── __init__.py
+    ├── user.py
+    └── stock.py
+
+
+auth.py:	인증 유틸리티 함수 (해싱, JWT 등)
+routers/auth_router.py:    인증 API 엔드포인트	
+routers/watchlist_router.py:    관심 종목 API
+routers/stock_router.py:    주식 검색 API
+routers/market_router.py:   시장 데이터 API
+services/korea_investment.py:   한투 API 서비스	
+schemas/user.py:    Pydantic 스키마	
