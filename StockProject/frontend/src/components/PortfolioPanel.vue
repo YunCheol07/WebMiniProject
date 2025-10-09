@@ -361,20 +361,21 @@ defineExpose({ fetchPortfolio })
   margin-bottom: 20px;
 }
 
+/* 제목 크기 감소 */
 h3 {
   color: #4CAF50;
-  font-size: 20px;
+  font-size: 18px;  /* ← 20px에서 18px로 감소 */
   margin: 0;
 }
 
 .add-btn {
-  padding: 10px 20px;
+  padding: 8px 16px;  /* ← 10px 20px에서 감소 */
   background: #4CAF50;
   color: white;
   border: none;
   border-radius: 8px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 13px;  /* ← 14px에서 13px로 감소 */
   font-weight: bold;
   transition: all 0.3s;
 }
@@ -393,7 +394,7 @@ h3 {
 }
 
 .help-text {
-  font-size: 14px;
+  font-size: 13px;  /* ← 14px에서 13px로 감소 */
   color: #666;
   margin-top: 10px;
 }
@@ -407,22 +408,24 @@ h3 {
 
 .summary-item {
   background: #2d2d2d;
-  padding: 20px;
+  padding: 16px;  /* ← 20px에서 16px로 감소 */
   border-radius: 10px;
   border: 2px solid #444;
 }
 
+/* 요약 라벨 크기 감소 */
 .summary-label {
   display: block;
   color: #aaa;
-  font-size: 14px;
-  margin-bottom: 10px;
+  font-size: 12px;  /* ← 14px에서 12px로 감소 */
+  margin-bottom: 8px;
 }
 
+/* 요약 값 크기 감소 */
 .summary-value {
   display: block;
   color: white;
-  font-size: 24px;
+  font-size: 20px;  /* ← 24px에서 20px로 감소 */
   font-weight: bold;
 }
 
@@ -451,24 +454,28 @@ thead {
   background: #2d2d2d;
 }
 
+/* 테이블 헤더 크기 감소 */
 th {
-  padding: 15px;
+  padding: 12px;  /* ← 15px에서 12px로 감소 */
   text-align: left;
   color: #aaa;
-  font-size: 14px;
+  font-size: 13px;  /* ← 14px에서 13px로 감소 */
   font-weight: 600;
   border-bottom: 2px solid #444;
 }
 
+/* 테이블 데이터 크기 감소 */
 td {
-  padding: 15px;
+  padding: 12px;  /* ← 15px에서 12px로 감소 */
   color: white;
+  font-size: 14px;  /* ← 추가: 명시적으로 14px 설정 */
   border-bottom: 1px solid #333;
 }
 
 .stock-name {
   font-weight: 600;
   color: #4CAF50;
+  font-size: 14px;  /* ← 추가: 명시적 설정 */
 }
 
 .profit {
@@ -486,9 +493,10 @@ td {
   color: white;
   border: none;
   border-radius: 50%;
-  width: 30px;
-  height: 30px;
+  width: 28px;  /* ← 30px에서 28px로 감소 */
+  height: 28px;  /* ← 30px에서 28px로 감소 */
   cursor: pointer;
+  font-size: 16px;  /* ← 추가: X 버튼 크기 */
   transition: all 0.3s;
 }
 
@@ -524,27 +532,30 @@ td {
 
 .modal-content h3 {
   margin-bottom: 20px;
+  font-size: 18px;  /* ← 모달 제목 크기도 통일 */
 }
 
 .form-group {
   margin-bottom: 20px;
 }
 
+/* 라벨 크기 감소 */
 label {
   display: block;
   color: #aaa;
-  font-size: 14px;
+  font-size: 13px;  /* ← 14px에서 13px로 감소 */
   margin-bottom: 8px;
 }
 
+/* 인풋 크기 감소 */
 input {
   width: 100%;
-  padding: 12px;
+  padding: 10px;  /* ← 12px에서 10px로 감소 */
   background: #2d2d2d;
   border: 2px solid #444;
   border-radius: 8px;
   color: white;
-  font-size: 16px;
+  font-size: 14px;  /* ← 16px에서 14px로 감소 */
 }
 
 input:focus {
@@ -576,7 +587,7 @@ input:focus {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 16px;
+  padding: 10px 14px;  /* ← 12px 16px에서 감소 */
   cursor: pointer;
   transition: background 0.2s;
   border-bottom: 1px solid #333;
@@ -590,15 +601,16 @@ input:focus {
   background: #353535;
 }
 
+/* 검색 결과 텍스트 크기 감소 */
 .result-name {
   color: white;
   font-weight: 600;
-  font-size: 15px;
+  font-size: 14px;  /* ← 15px에서 14px로 감소 */
 }
 
 .result-code {
   color: #888;
-  font-size: 13px;
+  font-size: 12px;  /* ← 13px에서 12px로 감소 */
 }
 
 .no-results {
@@ -613,11 +625,12 @@ input:focus {
   padding: 16px;
   text-align: center;
   color: #888;
+  font-size: 13px;  /* ← 추가 */
   z-index: 1001;
 }
 
 .selected-stock {
-  padding: 12px;
+  padding: 10px;  /* ← 12px에서 10px로 감소 */
   background: rgba(76, 175, 80, 0.1);
   border: 2px solid #4CAF50;
   border-radius: 8px;
@@ -626,14 +639,14 @@ input:focus {
 
 .selected-label {
   color: #aaa;
-  font-size: 14px;
+  font-size: 13px;  /* ← 14px에서 13px로 감소 */
   margin-right: 10px;
 }
 
 .selected-name {
   color: #4CAF50;
   font-weight: 600;
-  font-size: 16px;
+  font-size: 14px;  /* ← 16px에서 14px로 감소 */
 }
 
 .error-message {
@@ -644,6 +657,7 @@ input:focus {
   border-radius: 8px;
   margin-bottom: 20px;
   text-align: center;
+  font-size: 13px;  /* ← 추가 */
 }
 
 .modal-buttons {
@@ -652,13 +666,14 @@ input:focus {
   justify-content: flex-end;
 }
 
+/* 버튼 크기 감소 */
 .cancel-btn,
 .submit-btn {
-  padding: 12px 24px;
+  padding: 10px 20px;  /* ← 12px 24px에서 감소 */
   border: none;
   border-radius: 8px;
   cursor: pointer;
-  font-size: 16px;
+  font-size: 14px;  /* ← 16px에서 14px로 감소 */
   font-weight: bold;
   transition: all 0.3s;
 }

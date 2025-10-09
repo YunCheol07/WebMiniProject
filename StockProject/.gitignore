@@ -1,6 +1,9 @@
 # 가상환경 폴더 제외
 venv/
 
+# 테스트 yaml 파일 제외
+stockinfo.yaml
+
 # backend 폴더 내 stockinfo.yaml 파일 제외
 backend/stockinfo.yaml
 

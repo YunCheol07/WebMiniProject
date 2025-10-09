@@ -1,65 +1,76 @@
 <template>
-  <div class="stock-search">
-    <h2>📈 주식 검색</h2>
-    
-    <div class="search-box">
-      <div class="search-wrapper">
-        <input 
-          v-model="searchQuery" 
-          @input="handleSearchInput"
-          @keydown.enter="handleEnterKey"
-          @keydown.down="highlightNext"
-          @keydown.up="highlightPrev"
-          @focus="showResults = true"
-          placeholder="종목명 또는 종목코드 입력 (예: 삼성전자, 005930)"
-          autocomplete="off"
-          ref="searchInput"
-        />
-        <button @click="searchStock" :disabled="!selectedStock" class="search-btn">
-          🔍 조회
-        </button>
+  <div class="stock-search-horizontal">
+    <div class="search-section">
+      <h2>📈 주식 검색</h2>
+      
+      <div class="search-box">
+        <div class="search-wrapper">
+          <input 
+            v-model="searchQuery" 
+            @input="handleSearchInput"
+            @keydown.enter="handleEnterKey"
+            @keydown.down="highlightNext"
+            @keydown.up="highlightPrev"
+            @focus="showResults = true"
+            placeholder="종목명 또는 종목코드 입력"
+            autocomplete="off"
+            ref="searchInput"
+          />
+          <button @click="searchStock" :disabled="!selectedStock" class="search-btn">
+            🔍 조회
+          </button>
 
-        <!-- 자동완성 결과 -->
-        <div v-if="showResults && searchResults.length > 0" class="search-results">
-          <div 
-            v-for="(stock, index) in searchResults" 
-            :key="stock.stock_code"
-            :class="['result-item', { highlighted: highlightedIndex === index }]"
-            @click="selectStock(stock)"
-            @mouseenter="highlightedIndex = index"
-          >
-            <span class="stock-name">{{ stock.stock_name }}</span>
-            <span class="stock-code">{{ stock.stock_code }}</span>
+          <!-- 자동완성 결과 -->
+          <div v-if="showResults && searchResults.length > 0" class="search-results">
+            <div 
+              v-for="(stock, index) in searchResults" 
+              :key="stock.stock_code"
+              :class="['result-item', { highlighted: highlightedIndex === index }]"
+              @click="selectStock(stock)"
+              @mouseenter="highlightedIndex = index"
+            >
+              <span class="stock-name">{{ stock.stock_name }}</span>
+              <span class="stock-code">{{ stock.stock_code }}</span>
+            </div>
+          </div>
+
+          <div v-if="showResults && searchQuery && searchResults.length === 0" class="no-results">
+            검색 결과가 없습니다
           </div>
         </div>
+      </div>
 
-        <div v-if="showResults && searchQuery && searchResults.length === 0" class="no-results">
-          검색 결과가 없습니다
-        </div>
+      <!-- 선택된 종목 표시 -->
+      <div v-if="selectedStock" class="selected-stock">
+        <span class="selected-label">선택:</span>
+        <span class="selected-name">{{ selectedStock.stock_name }} ({{ selectedStock.stock_code }})</span>
       </div>
     </div>
 
-    <!-- 선택된 종목 표시 -->
-    <div v-if="selectedStock" class="selected-stock">
-      <span class="selected-label">선택된 종목:</span>
-      <span class="selected-name">{{ selectedStock.stock_name }} ({{ selectedStock.stock_code }})</span>
-    </div>
-
-    <div class="popular-stocks">
-      <h3>주요 종목:</h3>
-      <button 
-        v-for="(name, code) in popularStocks" 
-        :key="code"
-        @click="quickSelect(code, name)"
-      >
-        {{ name }}
-      </button>
+    <!-- 관심 종목 섹션 (옆으로) -->
+    <div class="watchlist-section">
+      <h2>⭐ 관심 종목</h2>
+      
+      <div v-if="watchlistStocks.length === 0" class="empty-watchlist">
+        <p>관심 종목이 없습니다</p>
+      </div>
+      
+      <div v-else class="watchlist-buttons">
+        <button 
+          v-for="stock in watchlistStocks.slice(0, 5)" 
+          :key="stock.stock_code"
+          @click="quickSelect(stock.stock_code, stock.stock_name)"
+          class="watchlist-btn"
+        >
+          {{ stock.stock_name }}
+        </button>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, defineEmits } from 'vue'
+import { ref, onMounted, defineEmits } from 'vue'
 import axios from 'axios'
 
 const emit = defineEmits(['search'])
@@ -72,14 +83,7 @@ const showResults = ref(false)
 const selectedStock = ref(null)
 const searchInput = ref(null)
 const highlightedIndex = ref(-1)
-
-const popularStocks = {
-  '005930': '삼성전자',
-  '000660': 'SK하이닉스',
-  '035420': 'NAVER',
-  '035720': '카카오',
-  '005380': '현대차'
-}
+const watchlistStocks = ref([])
 
 let searchTimeout = null
 
@@ -113,7 +117,6 @@ const handleSearchInput = async () => {
   }, 300)
 }
 
-// 키보드 네비게이션 - 아래 방향키
 const highlightNext = () => {
   if (searchResults.value.length > 0) {
     highlightedIndex.value = Math.min(
@@ -123,24 +126,19 @@ const highlightNext = () => {
   }
 }
 
-// 키보드 네비게이션 - 위 방향키
 const highlightPrev = () => {
   highlightedIndex.value = Math.max(highlightedIndex.value - 1, -1)
 }
 
-// Enter 키 처리
 const handleEnterKey = () => {
-  // 하이라이트된 항목이 있으면 선택
   if (highlightedIndex.value >= 0 && searchResults.value[highlightedIndex.value]) {
     selectStock(searchResults.value[highlightedIndex.value])
     searchStock()
   } 
-  // 하이라이트 없고 검색 결과가 있으면 첫 번째 항목 선택
   else if (searchResults.value.length > 0) {
     selectStock(searchResults.value[0])
     searchStock()
   }
-  // 이미 선택된 종목이 있으면 바로 조회
   else if (selectedStock.value) {
     searchStock()
   }
@@ -165,42 +163,74 @@ const quickSelect = (code, name) => {
   emit('search', code, name)
 }
 
-// 외부 클릭 시 검색 결과 숨기기
+const fetchWatchlist = async () => {
+  const token = localStorage.getItem('token')
+  if (!token) return
+
+  try {
+    const response = await axios.get(`${API_BASE}/watchlist`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+
+    if (response.data.success) {
+      watchlistStocks.value = response.data.watchlist
+    }
+  } catch (error) {
+    console.error('관심 종목 조회 실패:', error)
+  }
+}
+
+onMounted(() => {
+  fetchWatchlist()
+})
+
 document.addEventListener('click', (e) => {
-  if (!e.target.closest('.stock-search')) {
+  if (!e.target.closest('.stock-search-horizontal')) {
     showResults.value = false
   }
 })
+
+defineExpose({ fetchWatchlist })
 </script>
 
 <style scoped>
-.stock-search {
-  padding: 20px;
+/* 가로 배치 */
+.stock-search-horizontal {
+  display: grid;
+  grid-template-columns: 1fr 1fr;  /* 검색 : 관심종목 = 1:1 */
+  gap: 20px;
+  padding: 15px 20px;
   background: #1e1e1e;
   border-radius: 10px;
-  margin-bottom: 20px;
+  margin-bottom: 15px;
 }
 
 h2 {
   color: #4CAF50;
-  margin-bottom: 15px;
-  font-size: 22px;
+  margin-bottom: 12px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+/* 검색 섹션 */
+.search-section {
+  flex: 1;
 }
 
 .search-box {
-  margin-bottom: 20px;
+  margin-bottom: 10px;
 }
 
 .search-wrapper {
   position: relative;
   display: flex;
-  gap: 10px;
+  gap: 8px;
 }
 
 input {
   flex: 1;
-  padding: 14px 16px;
-  font-size: 16px;
+  padding: 10px 12px;
+  font-size: 14px;
   border: 2px solid #444;
   border-radius: 8px;
   background: #2d2d2d;
@@ -218,13 +248,13 @@ input::placeholder {
 }
 
 .search-btn {
-  padding: 14px 24px;
+  padding: 10px 18px;
   background: #4CAF50;
   color: white;
   border: none;
   border-radius: 8px;
   cursor: pointer;
-  font-size: 16px;
+  font-size: 13px;
   font-weight: bold;
   white-space: nowrap;
   transition: all 0.3s;
@@ -241,17 +271,16 @@ input::placeholder {
   opacity: 0.5;
 }
 
-/* 자동완성 결과 */
 .search-results {
   position: absolute;
   top: 100%;
   left: 0;
-  right: 120px;
+  right: 90px;
   background: #2d2d2d;
   border: 2px solid #444;
   border-radius: 8px;
   margin-top: 5px;
-  max-height: 300px;
+  max-height: 280px;
   overflow-y: auto;
   z-index: 100;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
@@ -261,7 +290,7 @@ input::placeholder {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 16px;
+  padding: 10px 14px;
   cursor: pointer;
   transition: background 0.2s;
   border-bottom: 1px solid #333;
@@ -286,13 +315,13 @@ input::placeholder {
 .stock-name {
   color: white;
   font-weight: 600;
-  font-size: 15px;
+  font-size: 13px;
   flex: 1;
 }
 
 .stock-code {
   color: #888;
-  font-size: 13px;
+  font-size: 12px;
   margin-left: 10px;
 }
 
@@ -300,68 +329,88 @@ input::placeholder {
   position: absolute;
   top: 100%;
   left: 0;
-  right: 120px;
+  right: 90px;
   background: #2d2d2d;
   border: 2px solid #444;
   border-radius: 8px;
   margin-top: 5px;
-  padding: 16px;
+  padding: 12px;
   text-align: center;
   color: #888;
+  font-size: 13px;
   z-index: 100;
 }
 
-/* 선택된 종목 표시 */
 .selected-stock {
-  padding: 12px 16px;
+  padding: 8px 12px;
   background: rgba(76, 175, 80, 0.1);
   border: 2px solid #4CAF50;
   border-radius: 8px;
-  margin-bottom: 20px;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .selected-label {
   color: #aaa;
-  font-size: 14px;
+  font-size: 12px;
 }
 
 .selected-name {
   color: #4CAF50;
   font-weight: 600;
-  font-size: 16px;
+  font-size: 13px;
 }
 
-/* 주요 종목 */
-.popular-stocks {
-  margin-top: 30px;
+/* 관심 종목 섹션 */
+.watchlist-section {
+  flex: 1;
+  border-left: 2px solid #333;
+  padding-left: 20px;
 }
 
-.popular-stocks h3 {
-  margin-bottom: 12px;
-  color: #aaa;
-  font-size: 14px;
-  font-weight: 600;
+.empty-watchlist {
+  text-align: center;
+  padding: 20px;
+  color: #666;
+  font-size: 13px;
 }
 
-.popular-stocks button {
-  min-width: 100px;
-  margin: 5px;
+.watchlist-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.watchlist-btn {
+  padding: 8px 14px;
   background: #2d2d2d;
   border: 2px solid #444;
   color: white;
-  padding: 10px 16px;
   border-radius: 8px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 13px;
   transition: all 0.3s;
+  white-space: nowrap;
 }
 
-.popular-stocks button:hover {
+.watchlist-btn:hover {
   background: #353535;
   border-color: #4CAF50;
   transform: translateY(-2px);
+}
+
+/* 반응형 */
+@media (max-width: 1024px) {
+  .stock-search-horizontal {
+    grid-template-columns: 1fr;
+  }
+  
+  .watchlist-section {
+    border-left: none;
+    border-top: 2px solid #333;
+    padding-left: 0;
+    padding-top: 15px;
+  }
 }
 </style>
