@@ -146,8 +146,6 @@ python database.py
 주식 종목 데이터 로드 (Excel 파일 필요)
 python load_stocks.py kospi_code_name.xlsx
 
-text
-
 ### 5. 서버 실행
 
 개발 모드 (hot reload)
@@ -156,8 +154,6 @@ uvicorn app:app --reload --host 0.0.0.0 --port 8000
 프로덕션 모드
 uvicorn app:app --host 0.0.0.0 --port 8000 --workers 4
 
-text
-
 서버 실행 후: `http://localhost:8000/docs` 에서 API 문서 확인 가능
 
 ---
@@ -165,48 +161,40 @@ text
 ## 📊 데이터베이스 스키마
 
 ### Users (사용자)
-users
-├── user_id (PK, UUID)
-├── email (UNIQUE)
-├── password (Hashed)
-├── username
-├── created_at
-└── updated_at
-
-text
+users  
+├── user_id (PK, UUID)  
+├── email (UNIQUE)  
+├── password (Hashed)  
+├── username  
+├── created_at  
+└── updated_at  
 
 ### Stocks (주식 종목)
-stocks
-├── stock_id (PK)
-├── stock_code (UNIQUE)
-├── stock_name
-├── created_at
-└── updated_at
-
-text
+stocks  
+├── stock_id (PK)  
+├── stock_code (UNIQUE)  
+├── stock_name  
+├── created_at  
+└── updated_at  
 
 ### Watchlist (관심 종목)
-watchlist
-├── watchlist_id (PK)
-├── user_id (FK → users)
-├── stock_id (FK → stocks)
-├── added_at
-├── alert_enabled
-└── target_price
-
-text
+watchlist  
+├── watchlist_id (PK)  
+├── user_id (FK → users)  
+├── stock_id (FK → stocks)  
+├── added_at  
+├── alert_enabled  
+└── target_price  
 
 ### Portfolio (포트폴리오)
-portfolio
-├── portfolio_id (PK)
-├── user_id (FK → users)
-├── stock_id (FK → stocks)
-├── quantity
-├── avg_price
-├── purchase_date
-└── created_at
-
-text
+portfolio  
+├── portfolio_id (PK)  
+├── user_id (FK → users)  
+├── stock_id (FK → stocks)  
+├── quantity  
+├── avg_price  
+├── purchase_date  
+└── created_at  
 
 ---
 
@@ -214,46 +202,46 @@ text
 
 ### 인증 API (`/api/auth`)
 
-| Method | Endpoint | 설명 |
-|--------|----------|------|
-| POST | `/register` | 회원가입 |
-| POST | `/login` | 로그인 |
-| GET | `/me` | 현재 사용자 정보 |
-| POST | `/logout` | 로그아웃 |
+| Method | Endpoint | 설명 |  
+|--------|----------|------|  
+| POST | `/register` | 회원가입 |  
+| POST | `/login` | 로그인 |  
+| GET | `/me` | 현재 사용자 정보 |  
+| POST | `/logout` | 로그아웃 |  
 
 ### 주식 검색 API (`/api/stocks`)
 
-| Method | Endpoint | 설명 |
-|--------|----------|------|
-| GET | `/search?q={query}` | 종목 검색 (자동완성) |
-| GET | `/{stock_code}` | 특정 종목 정보 |
-| GET | `/list?page=1&limit=20` | 전체 종목 목록 |
+| Method | Endpoint | 설명 |  
+|--------|----------|------|  
+| GET | `/search?q={query}` | 종목 검색 (자동완성) |  
+| GET | `/{stock_code}` | 특정 종목 정보 |  
+| GET | `/list?page=1&limit=20` | 전체 종목 목록 |  
 
 ### 실시간 데이터 API (`/api/stock`)
 
-| Method | Endpoint | 설명 |
-|--------|----------|------|
-| GET | `/current/{stock_code}` | 현재가 조회 |
-| GET | `/chart/{stock_code}?period=D` | 차트 데이터 |
-| GET | `/news/{stock_code}` | 관련 뉴스 |
+| Method | Endpoint | 설명 |  
+|--------|----------|------|  
+| GET | `/current/{stock_code}` | 현재가 조회 |  
+| GET | `/chart/{stock_code}?period=D` | 차트 데이터 |  
+| GET | `/news/{stock_code}` | 관련 뉴스 |  
 
 ### 관심 종목 API (`/api/watchlist`)
 
-| Method | Endpoint | 설명 |
-|--------|----------|------|
-| GET | `/` | 관심 종목 목록 |
-| POST | `/{stock_code}` | 관심 종목 추가 |
-| DELETE | `/{stock_code}` | 관심 종목 삭제 |
-| GET | `/check/{stock_code}` | 포함 여부 확인 |
+| Method | Endpoint | 설명 |  
+|--------|----------|------|  
+| GET | `/` | 관심 종목 목록 |  
+| POST | `/{stock_code}` | 관심 종목 추가 |  
+| DELETE | `/{stock_code}` | 관심 종목 삭제 |  
+| GET | `/check/{stock_code}` | 포함 여부 확인 |  
 
 ### 포트폴리오 API (`/api/portfolio`)
 
-| Method | Endpoint | 설명 |
-|--------|----------|------|
-| GET | `/` | 포트폴리오 조회 (실시간 손익 포함) |
-| POST | `/` | 보유 종목 추가 |
-| PUT | `/{portfolio_id}` | 보유 종목 수정 |
-| DELETE | `/{portfolio_id}` | 보유 종목 삭제 |
+| Method | Endpoint | 설명 |  
+|--------|----------|------|  
+| GET | `/` | 포트폴리오 조회 (실시간 손익 포함) |  
+| POST | `/` | 보유 종목 추가 |  
+| PUT | `/{portfolio_id}` | 보유 종목 수정 |  
+| DELETE | `/{portfolio_id}` | 보유 종목 삭제 |  
 
 ---
 
@@ -265,7 +253,6 @@ text
 2. **API 요청** 시 Header에 토큰 포함
 Authorization: Bearer {access_token}
 
-text
 3. **토큰 만료** 시 재로그인 필요
 
 ### 보호된 엔드포인트
@@ -278,19 +265,19 @@ text
 
 ## 📦 주요 라이브러리
 
-fastapi==0.115.0
-uvicorn[standard]==0.32.0
-sqlalchemy==2.0.35
-psycopg2-binary==2.9.10
-pydantic==2.9.2
-pydantic-settings==2.6.0
-python-jose[cryptography]==3.3.0
-passlib[bcrypt]==1.7.4
-python-dotenv==1.0.1
-pandas==2.2.3
-openpyxl==3.1.5
-feedparser==6.0.11
-requests==2.32.3
+fastapi==0.115.0  
+uvicorn[standard]==0.32.0  
+sqlalchemy==2.0.35  
+psycopg2-binary==2.9.10  
+pydantic==2.9.2  
+pydantic-settings==2.6.0  
+python-jose[cryptography]==3.3.0  
+passlib[bcrypt]==1.7.4  
+python-dotenv==1.0.1  
+pandas==2.2.3  
+openpyxl==3.1.5  
+feedparser==6.0.11  
+requests==2.32.3  
 
 ---
 
@@ -299,18 +286,16 @@ requests==2.32.3
 ### API 문서로 테스트
 http://localhost:8000/docs
 
-text
-
 ### cURL 예시
 
 회원가입
-curl -X POST "http://localhost:8000/api/auth/register"
--H "Content-Type: application/json"
--d '{
-"email": "user@example.com",
-"password": "password123",
-"username": "홍길동"
-}'
+curl -X POST "http://localhost:8000/api/auth/register"  
+-H "Content-Type: application/json"  
+-d '{  
+"email": "user@example.com",  
+"password": "password123",  
+"username": "홍길동"  
+}'  
 
 종목 검색
 curl "http://localhost:8000/api/stocks/search?q=삼성"
@@ -319,8 +304,8 @@ curl "http://localhost:8000/api/stocks/search?q=삼성"
 curl "http://localhost:8000/api/stock/current/005930"
 
 포트폴리오 조회 (토큰 필요)
-curl -X GET "http://localhost:8000/api/portfolio"
--H "Authorization: Bearer {your_token}"
+curl -X GET "http://localhost:8000/api/portfolio"  
+-H "Authorization: Bearer {your_token}"  
 
 ---
 
@@ -347,13 +332,11 @@ curl -X GET "http://localhost:8000/api/portfolio"
 ## 🚨 문제 해결
 
 ### 1. DB 연결 실패
-PostgreSQL 실행 확인
-sudo systemctl status postgresql
+PostgreSQL 실행 확인   
+sudo systemctl status postgresql  
 
 연결 테스트
 psql -U postgres
-
-text
 
 ### 2. 한국투자증권 API 토큰 오류
 - 앱키/앱시크릿 확인
@@ -361,8 +344,8 @@ text
 - 계좌번호 형식 확인
 
 ### 3. 종목 데이터 없음
-종목 데이터 재로드
-python load_stocks.py kospi_code_name.xlsx
+종목 데이터 재로드  
+python load_stocks.py kospi_code_name.xlsx  
 
 ---
 
