@@ -6,7 +6,7 @@ import logging
 
 from config import get_settings
 from services.korea_investment import ki_service
-from routers import auth_router, stock_router, watchlist_router, market_router
+from routers import auth_router, stock_router, watchlist_router, market_router, portfolio_router
 
 # 설정
 settings = get_settings()
@@ -58,7 +58,7 @@ app.include_router(auth_router)
 app.include_router(stock_router)
 app.include_router(watchlist_router)
 app.include_router(market_router)
-
+app.include_router(portfolio_router) 
 
 # 루트 엔드포인트
 @app.get("/")

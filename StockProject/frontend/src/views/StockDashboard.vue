@@ -10,7 +10,10 @@
     </header>
     
     <StockSearch @search="handleSearch" />
-    
+
+    <!-- 포트폴리오 추가 -->
+    <PortfolioPanel ref="portfolioRef" />
+
     <!-- 관심 종목 패널 -->
     <WatchlistPanel 
       ref="watchlistRef"
@@ -51,6 +54,7 @@ import StockInfo from '../components/StockInfo.vue'
 import StockChart from '../components/StockChart.vue'
 import StockNews from '../components/StockNews.vue'
 import WatchlistPanel from '../components/WatchlistPanel.vue'
+import PortfolioPanel from '../components/PortfolioPanel.vue'
 import { useAuth } from '../stores/auth'
 
 const API_BASE = 'http://localhost:8000/api'
@@ -63,6 +67,7 @@ const searchedCode = ref('')
 const stockName = ref('')
 const chartRef = ref(null)
 const watchlistRef = ref(null)
+const portfolioRef = ref(null) 
 
 onMounted(async () => {
   await fetchUser()

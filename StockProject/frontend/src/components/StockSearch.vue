@@ -3,40 +3,46 @@
     <h2>📈 주식 검색</h2>
     
     <div class="search-box">
-      <input 
-        v-model="searchQuery" 
-        @input="handleSearchInput"
-        @keyup.enter="selectFirstResult"
-        @keydown.down="highlightNext"
-        @keydown.up="highlightPrev"
-        @focus="showResults = true"
-        placeholder="종목명 또는 종목코드 입력 (예: 삼성전자, 005930)"
-        autocomplete="off"
-        ref="searchInput"
-      />
-      <button @click="searchStock" :disabled="!selectedStock">
-        🔍 조회
-      </button>
-    </div>
+      <div class="search-wrapper">
+        <input 
+          v-model="searchQuery" 
+          @input="handleSearchInput"
+          @keydown.enter="handleEnterKey"
+          @keydown.down="highlightNext"
+          @keydown.up="highlightPrev"
+          @focus="showResults = true"
+          placeholder="종목명 또는 종목코드 입력 (예: 삼성전자, 005930)"
+          autocomplete="off"
+          ref="searchInput"
+        />
+        <button @click="searchStock" :disabled="!selectedStock" class="search-btn">
+          🔍 조회
+        </button>
 
-    <!-- 자동완성 결과 -->
-    <div v-if="showResults && searchResults.length > 0" class="search-results">
-      <div 
-        v-for="(stock, index) in searchResults" 
-        :key="stock.stock_code"
-        :class="['result-item', { highlighted: highlightedIndex === index }]"
-        @click="selectStock(stock)"
-        @mouseenter="highlightedIndex = index"
-      >
-        <div class="stock-info">
-          <span class="stock-name" v-html="highlightText(stock.stock_name)"></span>
-          <span class="stock-code">{{ stock.stock_code }}</span>
+        <!-- 자동완성 결과 -->
+        <div v-if="showResults && searchResults.length > 0" class="search-results">
+          <div 
+            v-for="(stock, index) in searchResults" 
+            :key="stock.stock_code"
+            :class="['result-item', { highlighted: highlightedIndex === index }]"
+            @click="selectStock(stock)"
+            @mouseenter="highlightedIndex = index"
+          >
+            <span class="stock-name">{{ stock.stock_name }}</span>
+            <span class="stock-code">{{ stock.stock_code }}</span>
+          </div>
+        </div>
+
+        <div v-if="showResults && searchQuery && searchResults.length === 0" class="no-results">
+          검색 결과가 없습니다
         </div>
       </div>
     </div>
 
-    <div v-if="showResults && searchQuery && searchResults.length === 0" class="no-results">
-      검색 결과가 없습니다
+    <!-- 선택된 종목 표시 -->
+    <div v-if="selectedStock" class="selected-stock">
+      <span class="selected-label">선택된 종목:</span>
+      <span class="selected-name">{{ selectedStock.stock_name }} ({{ selectedStock.stock_code }})</span>
     </div>
 
     <div class="popular-stocks">
@@ -64,8 +70,8 @@ const searchQuery = ref('')
 const searchResults = ref([])
 const showResults = ref(false)
 const selectedStock = ref(null)
-const highlightedIndex = ref(-1)
 const searchInput = ref(null)
+const highlightedIndex = ref(-1)
 
 const popularStocks = {
   '005930': '삼성전자',
@@ -104,19 +110,10 @@ const handleSearchInput = async () => {
       console.error('검색 실패:', error)
       searchResults.value = []
     }
-  }, 200) // 200ms 디바운싱
+  }, 300)
 }
 
-// 검색어 하이라이트
-const highlightText = (text) => {
-  if (!searchQuery.value) return text
-  
-  const query = searchQuery.value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-  const regex = new RegExp(`(${query})`, 'gi')
-  return text.replace(regex, '<mark>$1</mark>')
-}
-
-// 키보드 네비게이션
+// 키보드 네비게이션 - 아래 방향키
 const highlightNext = () => {
   if (searchResults.value.length > 0) {
     highlightedIndex.value = Math.min(
@@ -126,8 +123,27 @@ const highlightNext = () => {
   }
 }
 
+// 키보드 네비게이션 - 위 방향키
 const highlightPrev = () => {
   highlightedIndex.value = Math.max(highlightedIndex.value - 1, -1)
+}
+
+// Enter 키 처리
+const handleEnterKey = () => {
+  // 하이라이트된 항목이 있으면 선택
+  if (highlightedIndex.value >= 0 && searchResults.value[highlightedIndex.value]) {
+    selectStock(searchResults.value[highlightedIndex.value])
+    searchStock()
+  } 
+  // 하이라이트 없고 검색 결과가 있으면 첫 번째 항목 선택
+  else if (searchResults.value.length > 0) {
+    selectStock(searchResults.value[0])
+    searchStock()
+  }
+  // 이미 선택된 종목이 있으면 바로 조회
+  else if (selectedStock.value) {
+    searchStock()
+  }
 }
 
 const selectStock = (stock) => {
@@ -135,15 +151,6 @@ const selectStock = (stock) => {
   searchQuery.value = `${stock.stock_name} (${stock.stock_code})`
   showResults.value = false
   highlightedIndex.value = -1
-  emit('search', stock.stock_code, stock.stock_name)
-}
-
-const selectFirstResult = () => {
-  if (highlightedIndex.value >= 0 && searchResults.value[highlightedIndex.value]) {
-    selectStock(searchResults.value[highlightedIndex.value])
-  } else if (searchResults.value.length > 0) {
-    selectStock(searchResults.value[0])
-  }
 }
 
 const searchStock = () => {
@@ -158,6 +165,7 @@ const quickSelect = (code, name) => {
   emit('search', code, name)
 }
 
+// 외부 클릭 시 검색 결과 숨기기
 document.addEventListener('click', (e) => {
   if (!e.target.closest('.stock-search')) {
     showResults.value = false
@@ -166,53 +174,38 @@ document.addEventListener('click', (e) => {
 </script>
 
 <style scoped>
-/* 스타일은 동일, market-badge만 제거 */
-mark {
-  background-color: #4CAF50;
-  color: white;
-  padding: 2px 4px;
-  border-radius: 3px;
-  font-weight: bold;
-}
-
-.result-item.highlighted {
-  background: #4CAF50 !important;
-}
-
-.result-item.highlighted .stock-name,
-.result-item.highlighted .stock-code {
-  color: white;
-}
-
 .stock-search {
   padding: 20px;
   background: #1e1e1e;
   border-radius: 10px;
   margin-bottom: 20px;
-  position: relative;
 }
 
 h2 {
   color: #4CAF50;
-  margin-bottom: 10px;
+  margin-bottom: 15px;
+  font-size: 22px;
 }
 
 .search-box {
+  margin-bottom: 20px;
+}
+
+.search-wrapper {
+  position: relative;
   display: flex;
   gap: 10px;
-  margin: 20px 0;
-  position: relative;
 }
 
 input {
   flex: 1;
-  padding: 14px;
+  padding: 14px 16px;
   font-size: 16px;
   border: 2px solid #444;
   border-radius: 8px;
   background: #2d2d2d;
   color: white;
-  transition: border-color 0.3s;
+  transition: all 0.3s;
 }
 
 input:focus {
@@ -220,7 +213,11 @@ input:focus {
   border-color: #4CAF50;
 }
 
-button {
+input::placeholder {
+  color: #666;
+}
+
+.search-btn {
   padding: 14px 24px;
   background: #4CAF50;
   color: white;
@@ -228,28 +225,32 @@ button {
   border-radius: 8px;
   cursor: pointer;
   font-size: 16px;
+  font-weight: bold;
   white-space: nowrap;
   transition: all 0.3s;
 }
 
-button:hover:not(:disabled) {
+.search-btn:hover:not(:disabled) {
   background: #45a049;
+  transform: translateY(-2px);
 }
 
-button:disabled {
+.search-btn:disabled {
   background: #555;
   cursor: not-allowed;
+  opacity: 0.5;
 }
 
+/* 자동완성 결과 */
 .search-results {
   position: absolute;
   top: 100%;
   left: 0;
-  right: 0;
+  right: 120px;
   background: #2d2d2d;
   border: 2px solid #444;
   border-radius: 8px;
-  margin-top: -10px;
+  margin-top: 5px;
   max-height: 300px;
   overflow-y: auto;
   z-index: 100;
@@ -257,6 +258,9 @@ button:disabled {
 }
 
 .result-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   padding: 12px 16px;
   cursor: pointer;
   transition: background 0.2s;
@@ -267,60 +271,97 @@ button:disabled {
   border-bottom: none;
 }
 
-.result-item:hover {
-  background: #353535;
+.result-item:hover,
+.result-item.highlighted {
+  background: #4CAF50;
 }
 
-.stock-info {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.stock-name {
-  font-size: 15px;
-  font-weight: 600;
+.result-item:hover .stock-name,
+.result-item:hover .stock-code,
+.result-item.highlighted .stock-name,
+.result-item.highlighted .stock-code {
   color: white;
 }
 
+.stock-name {
+  color: white;
+  font-weight: 600;
+  font-size: 15px;
+  flex: 1;
+}
+
 .stock-code {
-  font-size: 13px;
   color: #888;
+  font-size: 13px;
+  margin-left: 10px;
 }
 
 .no-results {
   position: absolute;
   top: 100%;
   left: 0;
-  right: 0;
+  right: 120px;
   background: #2d2d2d;
   border: 2px solid #444;
   border-radius: 8px;
-  margin-top: -10px;
+  margin-top: 5px;
   padding: 16px;
   text-align: center;
   color: #888;
   z-index: 100;
 }
 
+/* 선택된 종목 표시 */
+.selected-stock {
+  padding: 12px 16px;
+  background: rgba(76, 175, 80, 0.1);
+  border: 2px solid #4CAF50;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.selected-label {
+  color: #aaa;
+  font-size: 14px;
+}
+
+.selected-name {
+  color: #4CAF50;
+  font-weight: 600;
+  font-size: 16px;
+}
+
+/* 주요 종목 */
 .popular-stocks {
   margin-top: 30px;
 }
 
 .popular-stocks h3 {
-  margin-bottom: 10px;
+  margin-bottom: 12px;
   color: #aaa;
   font-size: 14px;
+  font-weight: 600;
 }
 
 .popular-stocks button {
   min-width: 100px;
   margin: 5px;
-  background: #555;
+  background: #2d2d2d;
+  border: 2px solid #444;
+  color: white;
   padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.3s;
 }
 
 .popular-stocks button:hover {
-  background: #666;
+  background: #353535;
+  border-color: #4CAF50;
+  transform: translateY(-2px);
 }
 </style>
