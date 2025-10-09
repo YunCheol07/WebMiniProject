@@ -313,12 +313,12 @@ curl -X GET "http://localhost:8000/api/portfolio"
 
 ### 구현된 보안 기능
 
-✅ 비밀번호 해싱 (bcrypt)
-✅ JWT 토큰 인증
-✅ CORS 설정
-✅ SQL Injection 방지 (SQLAlchemy ORM)
-✅ 입력 데이터 검증 (Pydantic)
-✅ 환경변수로 민감 정보 관리
+✅ 비밀번호 해싱 (bcrypt)  
+✅ JWT 토큰 인증  
+✅ CORS 설정  
+✅ SQL Injection 방지 (SQLAlchemy ORM)  
+✅ 입력 데이터 검증 (Pydantic)  
+✅ 환경변수로 민감 정보 관리  
 
 ### 권장 사항
 
