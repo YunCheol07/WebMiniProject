@@ -63,33 +63,33 @@
 
 ## 📁 프로젝트 구조
 
-backend/
-├── app.py # FastAPI 메인 앱
-├── config.py # 환경설정
-├── database.py # DB 모델 및 연결
-├── auth.py # 인증 유틸리티
-│
-├── routers/ # API 라우터
-│ ├── init.py
-│ ├── auth_router.py # 인증 API
-│ ├── stock_router.py # 주식 검색 API
-│ ├── watchlist_router.py # 관심 종목 API
-│ ├── portfolio_router.py # 포트폴리오 API
-│ └── market_router.py # 실시간 주식 데이터 API
-│
-├── services/ # 비즈니스 로직
-│ ├── init.py
-│ └── korea_investment.py # 한국투자증권 API 서비스
-│
-├── schemas/ # Pydantic 스키마
-│ ├── init.py
-│ ├── user.py
-│ └── stock.py
-│
-├── .env # 환경변수 (gitignore)
-├── requirements.txt # Python 패키지
-├── load_stocks.py # 종목 데이터 로드 스크립트
-└── README.md
+backend/  
+├── app.py # FastAPI 메인 앱  
+├── config.py # 환경설정  
+├── database.py # DB 모델 및 연결  
+├── auth.py # 인증 유틸리티  
+│  
+├── routers/ # API 라우터  
+│ ├── init.py  
+│ ├── auth_router.py # 인증 API  
+│ ├── stock_router.py # 주식 검색 API  
+│ ├── watchlist_router.py # 관심 종목 API  
+│ ├── portfolio_router.py # 포트폴리오 API  
+│ └── market_router.py # 실시간 주식 데이터 API  
+│  
+├── services/ # 비즈니스 로직  
+│ ├── init.py  
+│ └── korea_investment.py # 한국투자증권 API 서비스  
+│  
+├── schemas/ # Pydantic 스키마  
+│ ├── init.py  
+│ ├── user.py  
+│ └── stock.py  
+│  
+├── .env # 환경변수 (gitignore)  
+├── requirements.txt # Python 패키지  
+├── load_stocks.py # 종목 데이터 로드 스크립트  
+└── README.md  
 
 ---
 
@@ -104,8 +104,8 @@ backend/
 ### 2. 환경 설정
 
 가상환경 생성 및 활성화
-python -m venv venv
-source venv/bin/activate # Windows: venv\Scripts\activate
+python -m venv venv  
+source venv/bin/activate # Windows: venv\Scripts\activate  
 
 패키지 설치
 pip install -r requirements.txt
