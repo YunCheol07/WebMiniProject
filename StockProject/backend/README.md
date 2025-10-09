@@ -114,28 +114,26 @@ pip install -r requirements.txt
 
 `.env` 파일 생성:
 
-Database
-DATABASE_URL=postgresql://username:password@localhost:5432/stock_db
+Database  
+DATABASE_URL=postgresql://username:password@localhost:5432/stock_db  
 
-JWT
-SECRET_KEY=your-secret-key-here
-ALGORITHM=HS256
-ACCESS_TOKEN_EXPIRE_MINUTES=60
+JWT  
+SECRET_KEY=your-secret-key-here  
+ALGORITHM=HS256  
+ACCESS_TOKEN_EXPIRE_MINUTES=60  
 
-한국투자증권 API
-REAL_APP_KEY=your-app-key
-REAL_APP_SECRET=your-app-secret
-REAL_URL=https://openapi.koreainvestment.com:9443
-REAL_CANO=your-account-number
-REAL_ACNT_PRDT_CD=01
+한국투자증권 API  
+REAL_APP_KEY=your-app-key  
+REAL_APP_SECRET=your-app-secret  
+REAL_URL=https://openapi.koreainvestment.com:9443  
+REAL_CANO=your-account-number  
+REAL_ACNT_PRDT_CD=01  
 
-CORS
-CORS_ORIGINS=["http://localhost:5173","http://localhost:3000"]
+CORS  
+CORS_ORIGINS=["http://localhost:5173","http://localhost:3000"]  
 
-Debug
-DEBUG=True
-
-text
+Debug  
+DEBUG=True  
 
 ### 4. 데이터베이스 설정
 
