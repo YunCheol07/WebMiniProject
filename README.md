@@ -318,11 +318,11 @@ StockProject/
 <table>
   <tr>
     <td width="50%">
-      <img src="https://via.placeholder.com/600x400?text=Login+Page" alt="로그인" />
+      <img src="docs/images/로그인화면.png" alt="로그인" />
       <p align="center"><b>로그인 페이지</b></p>
     </td>
     <td width="50%">
-      <img src="https://via.placeholder.com/600x400?text=Register+Page" alt="회원가입" />
+      <img src="docs/images/회원가입화면.png" alt="회원가입" />
       <p align="center"><b>회원가입 페이지</b></p>
     </td>
   </tr>
