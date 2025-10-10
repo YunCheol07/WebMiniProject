@@ -4,6 +4,9 @@ venv/
 # 테스트 yaml 파일 제외
 stockinfo.yaml
 
+# 이미지 폴더 제외
+docs/images/
+
 # backend 폴더 내 stockinfo.yaml 파일 제외
 backend/stockinfo.yaml
 
