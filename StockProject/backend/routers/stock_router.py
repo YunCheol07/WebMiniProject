@@ -7,6 +7,30 @@ from database import get_db, Stock
 
 router = APIRouter(prefix="/api/stocks", tags=["주식 검색"])
 
+@router.get("/list")  # 구체적인 경로를 먼저 등록
+async def list_stocks(
+    page: int = Query(1, ge=1),
+    limit: int = Query(20, le=100),
+    db: Session = Depends(get_db)
+):
+    """전체 종목 목록 조회"""
+    query = db.query(Stock)
+    total = query.count()
+    stocks = query.offset((page - 1) * limit).limit(limit).all()
+    
+    return {
+        "success": True,
+        "total": total,
+        "page": page,
+        "limit": limit,
+        "stocks": [
+            {
+                "stock_code": stock.stock_code,
+                "stock_name": stock.stock_name
+            }
+            for stock in stocks
+        ]
+    }
 
 @router.get("/search")
 async def search_stocks(
@@ -61,31 +85,4 @@ async def get_stock_info(stock_code: str, db: Session = Depends(get_db)):
     return {
         "stock_code": stock.stock_code,
         "stock_name": stock.stock_name
-    }
-
-
-@router.get("/list")
-async def list_stocks(
-    page: int = Query(1, ge=1),
-    limit: int = Query(20, le=100),
-    db: Session = Depends(get_db)
-):
-    """전체 종목 목록 조회"""
-    query = db.query(Stock)
-    
-    total = query.count()
-    stocks = query.offset((page - 1) * limit).limit(limit).all()
-    
-    return {
-        "success": True,
-        "total": total,
-        "page": page,
-        "limit": limit,
-        "stocks": [
-            {
-                "stock_code": stock.stock_code,
-                "stock_name": stock.stock_name
-            }
-            for stock in stocks
-        ]
     }
